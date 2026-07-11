@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registro de Servicios Técnicos</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 0; background: #fafaf9; }
+  input:focus, textarea:focus, select:focus, button:focus-visible {
+    outline: 2px solid #0f172a; outline-offset: 1px;
+  }
+  button { cursor: pointer; transition: all 0.15s ease; }
+  button:hover { transform: translateY(-1px); }
+  button:active { transform: translateY(0); }
+  @media print {
+    .no-print { display: none !important; }
+    .tarjeta-registro { break-inside: avoid; box-shadow: none !important; }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .tarjeta-registro { animation: fadeIn 0.3s ease; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+
+const { useState, useMemo, useEffect } = React;
+
+// =================== ICONOS (SVG simples como componentes) ===================
+const makeIcon = (path) => ({ size = 18, color = 'currentColor', strokeWidth = 2 }) =>
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">{path}</svg>;
+
+const Icons = {
+  Wrench: makeIcon(<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>),
+  Cable: makeIcon(<><path d="M4 9a2 2 0 0 1-2-2V5h6v2a2 2 0 0 1-2 2"/><path d="M3 5V3"/><path d="M7 5V3"/><path d="M19 15V6.5a3.5 3.5 0 0 0-7 0v11a3.5 3.5 0 0 1-7 0V9"/><path d="M17 21v-2"/><path d="M21 21v-2"/><path d="M22 19h-6v-2a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2z"/></>),
+  HelpCircle: makeIcon(<><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></>),
+  Settings: makeIcon(<><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></>),
+  Wifi: makeIcon(<><path d="M5 13a10 10 0 0 1 14 0"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><path d="M2 8.82a15 15 0 0 1 20 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></>),
+  Phone: makeIcon(<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>),
+  FileText: makeIcon(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></>),
+  Plus: makeIcon(<><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>),
+  Printer: makeIcon(<><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></>),
+  LogOut: makeIcon(<><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></>),
+  Calendar: makeIcon(<><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>),
+  User: makeIcon(<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>),
+  Hash: makeIcon(<><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></>),
+  CheckCircle2: makeIcon(<><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></>),
+  Circle: makeIcon(<circle cx="12" cy="12" r="10"/>),
+  X: makeIcon(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>),
+  Lock: makeIcon(<><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>),
+  Search: makeIcon(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>),
+  Tag: makeIcon(<><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></>),
+  Edit2: makeIcon(<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>),
+  Trash2: makeIcon(<><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></>),
+  Save: makeIcon(<><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></>),
+  Zap: makeIcon(<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>),
+  Cpu: makeIcon(<><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></>),
+  Server: makeIcon(<><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></>),
+  Monitor: makeIcon(<><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></>),
+  Smartphone: makeIcon(<><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></>),
+  Router: makeIcon(<><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6.01" y1="18" x2="6" y2="18"/><line x1="10.01" y1="18" x2="10" y2="18"/><path d="M9 14V6a3 3 0 0 1 6 0"/></>),
+  Shield: makeIcon(<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>),
+  Tv: makeIcon(<><rect x="2" y="7" width="20" height="15" rx="2" ry="2"/><polyline points="17 2 12 7 7 2"/></>),
+  Camera: makeIcon(<><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></>),
+  Lightbulb: makeIcon(<><line x1="9" y1="18" x2="15" y2="18"/><line x1="10" y1="22" x2="14" y2="22"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></>),
+  Home: makeIcon(<><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>),
+  Building: makeIcon(<><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></>),
+  Star: makeIcon(<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>),
+};
+
+const ICON_LIBRARY = {
+  cable: Icons.Cable, wrench: Icons.Wrench, settings: Icons.Settings, wifi: Icons.Wifi, help: Icons.HelpCircle,
+  zap: Icons.Zap, cpu: Icons.Cpu, server: Icons.Server, monitor: Icons.Monitor, smartphone: Icons.Smartphone,
+  router: Icons.Router, shield: Icons.Shield, tv: Icons.Tv, camera: Icons.Camera, lightbulb: Icons.Lightbulb,
+  home: Icons.Home, building: Icons.Building, star: Icons.Star,
+};
+
+const COLOR_PALETTE = [
+  { name: 'Verde', color: '#0d7a3d', bg: '#e8f5ee' },
+  { name: 'Naranja', color: '#b54708', bg: '#fef3e8' },
+  { name: 'Azul', color: '#1d4ed8', bg: '#e8eefe' },
+  { name: 'Morado', color: '#6d28d9', bg: '#f0eafd' },
+  { name: 'Rojo', color: '#b91c1c', bg: '#fee2e2' },
+  { name: 'Cyan', color: '#0891b2', bg: '#e0f2fe' },
+  { name: 'Rosa', color: '#be185d', bg: '#fce7f3' },
+  { name: 'Ámbar', color: '#a16207', bg: '#fef9c3' },
+  { name: 'Esmeralda', color: '#047857', bg: '#d1fae5' },
+  { name: 'Gris', color: '#475569', bg: '#eef2f6' },
+];
+
+const EMOJI_LIBRARY = [
+  '🔧', '🔨', '🪛', '⚙️', '🛠️', '🧰', '🔩', '⚡', '🔌', '💡',
+  '📡', '📶', '📱', '☎️', '📞', '📺', '💻', '🖥️', '⌨️', '🖱️',
+  '🖨️', '💾', '📷', '🎤', '🔊', '📻', '🌐', '☁️', '🔒', '🔐',
+  '🛡️', '🔑', '📦', '🚚', '🏠', '🏢', '🏪', '💼', '📋', '📝',
+  '⭐', '✨', '🔥', '✅', '⚠️', '🆕', '🎯', '🎨', '🚀', '💎',
+];
+
+function esEmoji(icon) {
+  if (!icon) return false;
+  if (ICON_LIBRARY[icon]) return false;
+  return /[^\x00-\x7F]/.test(icon);
+}
+
+function IconoCat({ icon, size = 22 }) {
+  if (esEmoji(icon)) {
+    return <span style={{ fontSize: size, lineHeight: 1, display: 'inline-block' }}>{icon}</span>;
+  }
+  const LucideIcon = ICON_LIBRARY[icon] || Icons.HelpCircle;
+  return <LucideIcon size={size} />;
+}
+
+const CATEGORIAS_DEFAULT = [
+  { id: 'instalacion', label: 'Instalación nueva', icon: 'cable', color: '#0d7a3d', bg: '#e8f5ee' },
+  { id: 'soporte', label: 'Soporte técnico', icon: 'wrench', color: '#b54708', bg: '#fef3e8' },
+  { id: 'mantenimiento', label: 'Mantenimiento', icon: 'settings', color: '#1d4ed8', bg: '#e8eefe' },
+  { id: 'configuracion', label: 'Configuración de red', icon: 'wifi', color: '#6d28d9', bg: '#f0eafd' },
+  { id: 'otro', label: 'Otro', icon: 'help', color: '#475569', bg: '#eef2f6' },
+];
+
+const USUARIOS = {
+  admin: { password: 'admin123', rol: 'administrador', nombre: 'Administrador' },
+  tecnico: { password: 'tecnico123', rol: 'tecnico', nombre: 'Técnico' },
+};
+
+const STORAGE = {
+  getRegistros: () => { try { return JSON.parse(localStorage.getItem('registros_v2') || '[]'); } catch { return []; } },
+  setRegistros: (r) => localStorage.setItem('registros_v2', JSON.stringify(r)),
+  getCategorias: () => { try { const c = localStorage.getItem('categorias_v2'); return c ? JSON.parse(c) : CATEGORIAS_DEFAULT; } catch { return CATEGORIAS_DEFAULT; } },
+  setCategorias: (c) => localStorage.setItem('categorias_v2', JSON.stringify(c)),
+  getCamposExtra: () => { try { return JSON.parse(localStorage.getItem('campos_extra_v2') || '[]'); } catch { return []; } },
+  setCamposExtra: (c) => localStorage.setItem('campos_extra_v2', JSON.stringify(c)),
+};
+
+function App() {
+  const [usuario, setUsuario] = useState(null);
+  const [registros, setRegistros] = useState([]);
+  const [categorias, setCategorias] = useState(CATEGORIAS_DEFAULT);
+  const [camposExtra, setCamposExtra] = useState([]);
+  const [vista, setVista] = useState('registros');
+  const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [editandoRegistro, setEditandoRegistro] = useState(null);
+  const [fechaSeleccionada, setFechaSeleccionada] = useState(new Date().toISOString().split('T')[0]);
+  const [busqueda, setBusqueda] = useState('');
+  const [cargado, setCargado] = useState(false);
+
+  useEffect(() => {
+    setRegistros(STORAGE.getRegistros());
+    setCategorias(STORAGE.getCategorias());
+    setCamposExtra(STORAGE.getCamposExtra());
+    setCargado(true);
+  }, []);
+
+  useEffect(() => { if (cargado) STORAGE.setRegistros(registros); }, [registros, cargado]);
+  useEffect(() => { if (cargado) STORAGE.setCategorias(categorias); }, [categorias, cargado]);
+  useEffect(() => { if (cargado) STORAGE.setCamposExtra(camposExtra); }, [camposExtra, cargado]);
+
+  const registrosFiltrados = useMemo(() => {
+    let r = registros.filter(x => x.fecha === fechaSeleccionada);
+    if (busqueda.trim()) {
+      const q = busqueda.toLowerCase().trim();
+      r = r.filter(x =>
+        x.nombre?.toLowerCase().includes(q) ||
+        x.documento?.toLowerCase().includes(q) ||
+        x.telefono?.includes(q) ||
+        x.telefono2?.includes(q) ||
+        x.contexto?.toLowerCase().includes(q)
+      );
+    }
+    return r;
+  }, [registros, fechaSeleccionada, busqueda]);
+
+  const busquedaGlobal = useMemo(() => {
+    if (!busqueda.trim()) return null;
+    const q = busqueda.toLowerCase().trim();
+    return registros.filter(x =>
+      x.nombre?.toLowerCase().includes(q) ||
+      x.documento?.toLowerCase().includes(q) ||
+      x.telefono?.includes(q) ||
+      x.telefono2?.includes(q)
+    );
+  }, [registros, busqueda]);
+
+  if (!usuario) return <Login onLogin={setUsuario} />;
+
+  const handleAgregar = (registro) => {
+    if (editandoRegistro) {
+      setRegistros(registros.map(r => r.id === editandoRegistro.id ? { ...registro, id: r.id, completado: r.completado, creadoPor: r.creadoPor } : r));
+      setEditandoRegistro(null);
+    } else {
+      setRegistros([...registros, { ...registro, id: Date.now(), completado: false, creadoPor: usuario.nombre }]);
+    }
+    setMostrarFormulario(false);
+  };
+
+  const handleToggleCompletado = (id) => {
+    if (usuario.rol !== 'administrador') return;
+    setRegistros(registros.map(r => r.id === id ? { ...r, completado: !r.completado } : r));
+  };
+
+  const handleEliminar = (id) => {
+    if (usuario.rol !== 'administrador') return;
+    if (!confirm('¿Eliminar este registro?')) return;
+    setRegistros(registros.filter(r => r.id !== id));
+  };
+
+  const handleEditar = (registro) => { setEditandoRegistro(registro); setMostrarFormulario(true); };
+
+  const handleImprimirPDF = () => {
+    const lista = fechaSeleccionada ? registrosFiltrados : (busquedaGlobal || []);
+    generarPDF(lista, fechaSeleccionada, categorias, camposExtra);
+  };
+
+  const handleLogout = () => { setUsuario(null); setMostrarFormulario(false); setEditandoRegistro(null); };
+
+  return (
+    <div style={styles.app}>
+      <header style={styles.header} className="no-print">
+        <div style={styles.headerLeft}>
+          <div style={styles.logo}>
+            <div style={styles.logoMark}>S</div>
+            <div>
+              <div style={styles.logoTitle}>Servicios</div>
+              <div style={styles.logoSubtitle}>Registro de Atenciones</div>
+            </div>
+          </div>
+        </div>
+        <div style={styles.headerRight}>
+          <div style={styles.userInfo}>
+            <div style={styles.userBadge}>{usuario.rol === 'administrador' ? 'ADMIN' : 'TÉCNICO'}</div>
+            <span style={styles.userName}>{usuario.nombre}</span>
+          </div>
+          <button onClick={handleLogout} style={styles.iconBtn} title="Cerrar sesión">
+            <Icons.LogOut size={18} />
+          </button>
+        </div>
+      </header>
+
+      {usuario.rol === 'administrador' && (
+        <nav style={styles.tabs} className="no-print">
+          <button onClick={() => setVista('registros')} style={{ ...styles.tab, ...(vista === 'registros' ? styles.tabActivo : {}) }}>
+            <Icons.FileText size={15} /> Registros
+          </button>
+          <button onClick={() => setVista('categorias')} style={{ ...styles.tab, ...(vista === 'categorias' ? styles.tabActivo : {}) }}>
+            <Icons.Tag size={15} /> Categorías
+          </button>
+          <button onClick={() => setVista('campos')} style={{ ...styles.tab, ...(vista === 'campos' ? styles.tabActivo : {}) }}>
+            <Icons.Edit2 size={15} /> Campos extra
+          </button>
+        </nav>
+      )}
+
+      <main style={styles.main}>
+        {vista === 'registros' && (
+          <>
+            <section style={styles.toolbar} className="no-print">
+              <div style={styles.toolbarLeft}>
+                <div style={styles.dateSelector}>
+                  <Icons.Calendar size={18} color="#64748b" />
+                  <input type="date" value={fechaSeleccionada}
+                    onChange={(e) => setFechaSeleccionada(e.target.value)} style={styles.dateInput} />
+                </div>
+                <div style={styles.searchBox}>
+                  <Icons.Search size={16} color="#94a3b8" />
+                  <input type="text" placeholder="Buscar por nombre, DNI, teléfono..."
+                    value={busqueda} onChange={(e) => setBusqueda(e.target.value)} style={styles.searchInput} />
+                  {busqueda && <button onClick={() => setBusqueda('')} style={styles.clearBtn}><Icons.X size={14} /></button>}
+                </div>
+              </div>
+              <div style={styles.toolbarActions}>
+                <button onClick={handleImprimirPDF} style={styles.btnSecondary}>
+                  <Icons.Printer size={16} /><span>Generar PDF</span>
+                </button>
+                <button onClick={() => { setEditandoRegistro(null); setMostrarFormulario(true); }} style={styles.btnPrimary}>
+                  <Icons.Plus size={16} /><span>Nuevo registro</span>
+                </button>
+              </div>
+            </section>
+
+            {busqueda.trim() && busquedaGlobal && busquedaGlobal.length > registrosFiltrados.length && fechaSeleccionada && (
+              <div style={styles.busquedaGlobal} className="no-print">
+                <Icons.Search size={14} />
+                <span>Hay <strong>{busquedaGlobal.length - registrosFiltrados.length}</strong> resultado(s) en otras fechas que coinciden con "<strong>{busqueda}</strong>".</span>
+                <button onClick={() => setFechaSeleccionada('')} style={styles.linkBtn2}>Ver todas las fechas</button>
+              </div>
+            )}
+
+            <ListaRegistros
+              registros={fechaSeleccionada ? registrosFiltrados : (busquedaGlobal || [])}
+              categorias={categorias} camposExtra={camposExtra} usuario={usuario}
+              onToggle={handleToggleCompletado} onEliminar={handleEliminar} onEditar={handleEditar}
+              mostrarFecha={!fechaSeleccionada}
+            />
+          </>
+        )}
+
+        {vista === 'categorias' && <GestorCategorias categorias={categorias} setCategorias={setCategorias} registros={registros} />}
+        {vista === 'campos' && <GestorCamposExtra campos={camposExtra} setCampos={setCamposExtra} />}
+      </main>
+
+      {mostrarFormulario && (
+        <FormularioModal
+          fechaInicial={fechaSeleccionada || new Date().toISOString().split('T')[0]}
+          categorias={categorias} camposExtra={camposExtra} registroEditando={editandoRegistro}
+          onGuardar={handleAgregar}
+          onCerrar={() => { setMostrarFormulario(false); setEditandoRegistro(null); }}
+        />
+      )}
+    </div>
+  );
+}
+
+function Login({ onLogin }) {
+  const [user, setUser] = useState('');
+  const [pass, setPass] = useState('');
+  const [error, setError] = useState('');
+
+  const intentarLogin = () => {
+    const u = USUARIOS[user.toLowerCase()];
+    if (u && u.password === pass) { onLogin({ usuario: user, rol: u.rol, nombre: u.nombre }); setError(''); }
+    else setError('Usuario o contraseña incorrectos');
+  };
+
+  return (
+    <div style={styles.loginWrapper}>
+      <div style={styles.loginCard}>
+        <div style={styles.loginLogo}>
+          <div style={{ ...styles.logoMark, width: 56, height: 56, fontSize: 24 }}>S</div>
+        </div>
+        <h1 style={styles.loginTitle}>Sistema de Registros</h1>
+        <p style={styles.loginSubtitle}>Ingresa tus credenciales para continuar</p>
+        <div style={styles.loginForm}>
+          <div style={styles.field}>
+            <label style={styles.label}>Usuario</label>
+            <input type="text" value={user} onChange={(e) => setUser(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && intentarLogin()}
+              style={styles.input} placeholder="admin o tecnico" autoFocus />
+          </div>
+          <div style={styles.field}>
+            <label style={styles.label}>Contraseña</label>
+            <input type="password" value={pass} onChange={(e) => setPass(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && intentarLogin()}
+              style={styles.input} placeholder="••••••••" />
+          </div>
+          {error && <div style={styles.errorBox}>{error}</div>}
+          <button onClick={intentarLogin} style={styles.btnLogin}>
+            <Icons.Lock size={16} /><span>Ingresar</span>
+          </button>
+        </div>
+        <div style={styles.loginHint}>
+          <strong>Demo:</strong> admin/admin123 · tecnico/tecnico123
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ListaRegistros({ registros, categorias, camposExtra, usuario, onToggle, onEliminar, onEditar, mostrarFecha }) {
+  if (registros.length === 0) {
+    return (
+      <div style={styles.empty}>
+        <div style={styles.emptyIcon}><Icons.FileText size={32} strokeWidth={1.5} /></div>
+        <h3 style={styles.emptyTitle}>Sin registros</h3>
+        <p style={styles.emptyText}>No hay atenciones que mostrar.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div style={styles.listaHeader} className="no-print">
+        <span style={styles.listaCount}>{registros.length} {registros.length === 1 ? 'registro' : 'registros'}</span>
+        <div style={styles.listaStats}>
+          <span style={styles.statCompletado}>✓ {registros.filter(r => r.completado).length} completados</span>
+          <span style={styles.statPendiente}>○ {registros.filter(r => !r.completado).length} pendientes</span>
+        </div>
+      </div>
+      <div style={styles.tarjetas}>
+        {registros.map(registro => (
+          <Tarjeta key={registro.id} registro={registro} categorias={categorias}
+            camposExtra={camposExtra} usuario={usuario}
+            onToggle={onToggle} onEliminar={onEliminar} onEditar={onEditar}
+            mostrarFecha={mostrarFecha} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Tarjeta({ registro, categorias, camposExtra, usuario, onToggle, onEliminar, onEditar, mostrarFecha }) {
+  const tipo = categorias.find(c => c.id === registro.tipo) || categorias[categorias.length - 1] || { color: '#475569', bg: '#eef2f6', label: 'Sin categoría' };
+  const esAdmin = usuario.rol === 'administrador';
+
+  return (
+    <article style={{ ...styles.tarjeta, borderLeftColor: tipo.color, opacity: registro.completado ? 0.7 : 1 }}
+      className="tarjeta-registro">
+      <div style={styles.tarjetaHeader}>
+        <div style={{ ...styles.iconoTipo, backgroundColor: tipo.bg, color: tipo.color }}>
+          <IconoCat icon={tipo?.icon} size={22} />
+        </div>
+        <div style={styles.tarjetaTitleArea}>
+          <div style={styles.tarjetaCliente}>{registro.nombre}</div>
+          <div style={{ ...styles.tarjetaTipo, color: tipo.color }}>
+            {tipo.label}
+            {mostrarFecha && registro.fecha && <span style={styles.fechaInline}> · {registro.fecha}</span>}
+          </div>
+        </div>
+        <div style={styles.tarjetaActions} className="no-print">
+          {esAdmin ? (
+            <button onClick={() => onToggle(registro.id)}
+              style={{ ...styles.checkBtn, color: registro.completado ? '#0d7a3d' : '#94a3b8' }}>
+              {registro.completado ? <Icons.CheckCircle2 size={24} /> : <Icons.Circle size={24} />}
+            </button>
+          ) : (
+            <div style={{ ...styles.estadoBadge,
+              backgroundColor: registro.completado ? '#e8f5ee' : '#fef3e8',
+              color: registro.completado ? '#0d7a3d' : '#b54708' }}>
+              {registro.completado ? 'Completado' : 'Pendiente'}
+            </div>
+          )}
+          {esAdmin && (
+            <>
+              <button onClick={() => onEditar(registro)} style={styles.deleteBtn} title="Editar">
+                <Icons.Edit2 size={15} />
+              </button>
+              <button onClick={() => onEliminar(registro.id)} style={styles.deleteBtn} title="Eliminar">
+                <Icons.X size={16} />
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+      <div style={styles.tarjetaBody}>
+        <div style={styles.datosGrid}>
+          <Dato icon={Icons.Hash} label="DNI / RUC" valor={registro.documento} />
+          <Dato icon={Icons.Phone} label="Teléfono" valor={registro.telefono} />
+          {registro.telefono2 && <Dato icon={Icons.Phone} label="Teléfono alt." valor={registro.telefono2} />}
+          <Dato icon={Icons.User} label="Atendido por" valor={registro.creadoPor} />
+          {camposExtra.map(campo => (
+            registro.extras?.[campo.id] && (
+              <Dato key={campo.id} icon={Icons.Tag} label={campo.label} valor={registro.extras[campo.id]} />
+            )
+          ))}
+        </div>
+        {registro.contexto && (
+          <div style={styles.contexto}>
+            <div style={styles.contextoLabel}>Detalle</div>
+            <div style={styles.contextoTexto}>{registro.contexto}</div>
+          </div>
+        )}
+      </div>
+    </article>
+  );
+}
+
+function Dato({ icon: Icon, label, valor }) {
+  if (!valor) return null;
+  return (
+    <div style={styles.dato}>
+      <Icon size={14} color="#94a3b8" />
+      <div>
+        <div style={styles.datoLabel}>{label}</div>
+        <div style={styles.datoValor}>{valor}</div>
+      </div>
+    </div>
+  );
+}
+
+function FormularioModal({ fechaInicial, categorias, camposExtra, registroEditando, onGuardar, onCerrar }) {
+  const [form, setForm] = useState(() => registroEditando || {
+    nombre: '', fecha: fechaInicial, documento: '', telefono: '', telefono2: '',
+    tipo: categorias[0]?.id || 'otro', contexto: '', extras: {},
+  });
+  const [mostrarTel2, setMostrarTel2] = useState(!!registroEditando?.telefono2);
+
+  const update = (campo) => (e) => setForm({ ...form, [campo]: e.target.value });
+  const updateExtra = (id) => (e) => setForm({ ...form, extras: { ...form.extras, [id]: e.target.value } });
+
+  const guardar = () => {
+    if (!form.nombre.trim() || !form.documento.trim() || !form.telefono.trim()) {
+      alert('Completá los campos obligatorios');
+      return;
+    }
+    onGuardar(form);
+  };
+
+  return (
+    <div style={styles.modalOverlay} onClick={onCerrar}>
+      <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <div style={styles.modalHeader}>
+          <h2 style={styles.modalTitle}>{registroEditando ? 'Editar registro' : 'Nuevo registro'}</h2>
+          <button onClick={onCerrar} style={styles.iconBtn}><Icons.X size={18} /></button>
+        </div>
+        <div style={styles.modalBody}>
+          <div style={styles.field}>
+            <label style={styles.label}>Nombre y apellido del cliente *</label>
+            <input type="text" value={form.nombre} onChange={update('nombre')}
+              style={styles.input} placeholder="Ej. Juan Pérez García" autoFocus />
+          </div>
+          <div style={styles.row}>
+            <div style={styles.field}>
+              <label style={styles.label}>Fecha *</label>
+              <input type="date" value={form.fecha} onChange={update('fecha')} style={styles.input} />
+            </div>
+            <div style={styles.field}>
+              <label style={styles.label}>DNI o RUC *</label>
+              <input type="text" value={form.documento} onChange={update('documento')} style={styles.input} placeholder="12345678" />
+            </div>
+          </div>
+          <div style={styles.field}>
+            <label style={styles.label}>Número de celular *</label>
+            <input type="tel" value={form.telefono} onChange={update('telefono')} style={styles.input} placeholder="999 888 777" />
+          </div>
+          {!mostrarTel2 ? (
+            <button onClick={() => setMostrarTel2(true)} style={styles.linkBtn}>
+              <Icons.Plus size={14} /><span>Agregar otro número</span>
+            </button>
+          ) : (
+            <div style={styles.field}>
+              <label style={styles.label}>Número alternativo</label>
+              <input type="tel" value={form.telefono2} onChange={update('telefono2')} style={styles.input} placeholder="999 888 777" />
+            </div>
+          )}
+          <div style={styles.field}>
+            <label style={styles.label}>Tipo de servicio *</label>
+            <div style={styles.tipoGrid}>
+              {categorias.map((t) => {
+                const activo = form.tipo === t.id;
+                return (
+                  <button key={t.id} onClick={() => setForm({ ...form, tipo: t.id })}
+                    style={{
+                      ...styles.tipoOpcion,
+                      borderColor: activo ? t.color : '#e2e8f0',
+                      backgroundColor: activo ? t.bg : 'white',
+                      color: activo ? t.color : '#475569',
+                    }}>
+                    <IconoCat icon={t.icon} size={18} />
+                    <span style={styles.tipoOpcionLabel}>{t.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          {camposExtra.length > 0 && (
+            <div style={styles.extrasBox}>
+              <div style={styles.extrasTitle}>Campos adicionales</div>
+              {camposExtra.map(campo => (
+                <div key={campo.id} style={styles.field}>
+                  <label style={styles.label}>{campo.label}</label>
+                  <input type={campo.tipo || 'text'} value={form.extras?.[campo.id] || ''}
+                    onChange={updateExtra(campo.id)} style={styles.input} placeholder={campo.placeholder || ''} />
+                </div>
+              ))}
+            </div>
+          )}
+          <div style={styles.field}>
+            <label style={styles.label}>Contexto / detalle del trabajo</label>
+            <textarea value={form.contexto} onChange={update('contexto')}
+              style={{ ...styles.input, minHeight: 90, resize: 'vertical', fontFamily: 'inherit' }}
+              placeholder="Describí lo que se va a hacer, equipos, observaciones..." />
+          </div>
+        </div>
+        <div style={styles.modalFooter}>
+          <button onClick={onCerrar} style={styles.btnSecondary}>Cancelar</button>
+          <button onClick={guardar} style={styles.btnPrimary}>
+            {registroEditando ? 'Actualizar' : 'Guardar registro'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function GestorCategorias({ categorias, setCategorias, registros }) {
+  const [editando, setEditando] = useState(null);
+  const [creando, setCreando] = useState(false);
+
+  const guardar = (cat) => {
+    if (editando) {
+      setCategorias(categorias.map(c => c.id === editando.id ? { ...cat, id: editando.id } : c));
+    } else {
+      const nuevoId = cat.label.toLowerCase().replace(/[^a-z0-9]/g, '_') + '_' + Date.now();
+      setCategorias([...categorias, { ...cat, id: nuevoId }]);
+    }
+    setEditando(null); setCreando(false);
+  };
+
+  const eliminar = (id) => {
+    const enUso = registros.some(r => r.tipo === id);
+    if (enUso) { alert('No se puede eliminar: hay registros usando esta categoría.'); return; }
+    if (categorias.length <= 1) { alert('Debe quedar al menos una categoría.'); return; }
+    if (!confirm('¿Eliminar esta categoría?')) return;
+    setCategorias(categorias.filter(c => c.id !== id));
+  };
+
+  return (
+    <div>
+      <div style={styles.sectionHeader}>
+        <div>
+          <h2 style={styles.sectionTitle}>Categorías de servicio</h2>
+          <p style={styles.sectionSub}>Personalizá los tipos de servicio que ofrecés.</p>
+        </div>
+        <button onClick={() => { setCreando(true); setEditando(null); }} style={styles.btnPrimary}>
+          <Icons.Plus size={16} /> Nueva categoría
+        </button>
+      </div>
+      <div style={styles.catGrid}>
+        {categorias.map(cat => {
+          const enUso = registros.filter(r => r.tipo === cat.id).length;
+          return (
+            <div key={cat.id} style={{ ...styles.catCard, borderLeftColor: cat.color }}>
+              <div style={{ ...styles.iconoTipo, backgroundColor: cat.bg, color: cat.color }}>
+                <IconoCat icon={cat.icon} size={24} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={styles.catLabel}>{cat.label}</div>
+                <div style={styles.catUso}>{enUso} {enUso === 1 ? 'registro' : 'registros'}</div>
+              </div>
+              <div style={{ display: 'flex', gap: 4 }}>
+                <button onClick={() => { setEditando(cat); setCreando(false); }} style={styles.deleteBtn} title="Editar">
+                  <Icons.Edit2 size={15} />
+                </button>
+                <button onClick={() => eliminar(cat.id)} style={styles.deleteBtn} title="Eliminar">
+                  <Icons.Trash2 size={15} />
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {(editando || creando) && (
+        <CategoriaEditor categoria={editando} onGuardar={guardar}
+          onCerrar={() => { setEditando(null); setCreando(false); }} />
+      )}
+    </div>
+  );
+}
+
+function CategoriaEditor({ categoria, onGuardar, onCerrar }) {
+  const [form, setForm] = useState(categoria || {
+    label: '', icon: 'wrench', color: COLOR_PALETTE[0].color, bg: COLOR_PALETTE[0].bg,
+  });
+  const [modoIcono, setModoIcono] = useState(
+    categoria && esEmoji(categoria.icon) ? 'emoji' : 'iconos'
+  );
+
+  const guardar = () => {
+    if (!form.label.trim()) { alert('Ingresá un nombre'); return; }
+    onGuardar(form);
+  };
+
+  const elegirColor = (c) => setForm({ ...form, color: c.color, bg: c.bg });
+
+  return (
+    <div style={styles.modalOverlay} onClick={onCerrar}>
+      <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <div style={styles.modalHeader}>
+          <h2 style={styles.modalTitle}>{categoria ? 'Editar categoría' : 'Nueva categoría'}</h2>
+          <button onClick={onCerrar} style={styles.iconBtn}><Icons.X size={18} /></button>
+        </div>
+        <div style={styles.modalBody}>
+          <div style={{ ...styles.catCard, borderLeftColor: form.color, marginBottom: 8 }}>
+            <div style={{ ...styles.iconoTipo, backgroundColor: form.bg, color: form.color }}>
+              <IconoCat icon={form.icon} size={24} />
+            </div>
+            <div>
+              <div style={styles.catLabel}>{form.label || 'Nombre de la categoría'}</div>
+              <div style={styles.catUso}>Vista previa</div>
+            </div>
+          </div>
+          <div style={styles.field}>
+            <label style={styles.label}>Nombre *</label>
+            <input type="text" value={form.label}
+              onChange={(e) => setForm({ ...form, label: e.target.value })}
+              style={styles.input} placeholder="Ej. Cambio de equipo" autoFocus />
+          </div>
+          <div style={styles.field}>
+            <label style={styles.label}>Color</label>
+            <div style={styles.colorRow}>
+              {COLOR_PALETTE.map(c => (
+                <button key={c.color} onClick={() => elegirColor(c)}
+                  style={{
+                    ...styles.colorBtn, backgroundColor: c.color,
+                    outline: form.color === c.color ? `3px solid ${c.color}40` : 'none',
+                    transform: form.color === c.color ? 'scale(1.1)' : 'scale(1)',
+                  }} title={c.name} />
+              ))}
+            </div>
+          </div>
+          <div style={styles.field}>
+            <div style={styles.iconHeader}>
+              <label style={styles.label}>Símbolo</label>
+              <div style={styles.toggle}>
+                <button onClick={() => setModoIcono('iconos')}
+                  style={{ ...styles.toggleBtn,
+                    backgroundColor: modoIcono === 'iconos' ? '#0f172a' : 'transparent',
+                    color: modoIcono === 'iconos' ? 'white' : '#64748b' }}>Iconos</button>
+                <button onClick={() => setModoIcono('emoji')}
+                  style={{ ...styles.toggleBtn,
+                    backgroundColor: modoIcono === 'emoji' ? '#0f172a' : 'transparent',
+                    color: modoIcono === 'emoji' ? 'white' : '#64748b' }}>Emojis</button>
+              </div>
+            </div>
+
+            {modoIcono === 'iconos' && (
+              <div style={styles.iconGrid}>
+                {Object.entries(ICON_LIBRARY).map(([key, Icon]) => (
+                  <button key={key} onClick={() => setForm({ ...form, icon: key })}
+                    style={{
+                      ...styles.iconBtn2,
+                      borderColor: form.icon === key ? form.color : '#e2e8f0',
+                      backgroundColor: form.icon === key ? form.bg : 'white',
+                      color: form.icon === key ? form.color : '#64748b',
+                    }}>
+                    <Icon size={18} />
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {modoIcono === 'emoji' && (
+              <>
+                <div style={styles.iconGrid}>
+                  {EMOJI_LIBRARY.map(emoji => (
+                    <button key={emoji} onClick={() => setForm({ ...form, icon: emoji })}
+                      style={{
+                        ...styles.iconBtn2, fontSize: 20,
+                        borderColor: form.icon === emoji ? form.color : '#e2e8f0',
+                        backgroundColor: form.icon === emoji ? form.bg : 'white',
+                      }}>
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+                <div style={{ marginTop: 10 }}>
+                  <label style={{ ...styles.label, fontSize: 12, color: '#64748b', marginBottom: 4 }}>
+                    O pegá tu propio emoji:
+                  </label>
+                  <input type="text" value={esEmoji(form.icon) ? form.icon : ''}
+                    onChange={(e) => {
+                      const v = e.target.value.trim();
+                      if (v) setForm({ ...form, icon: [...v][0] || v.charAt(0) });
+                      else setForm({ ...form, icon: 'wrench' });
+                    }}
+                    placeholder="🎨"
+                    style={{ ...styles.input, fontSize: 18, textAlign: 'center', maxWidth: 100 }}
+                    maxLength={4} />
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+        <div style={styles.modalFooter}>
+          <button onClick={onCerrar} style={styles.btnSecondary}>Cancelar</button>
+          <button onClick={guardar} style={styles.btnPrimary}>
+            <Icons.Save size={15} /> Guardar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function GestorCamposExtra({ campos, setCampos }) {
+  const [editando, setEditando] = useState(null);
+  const [creando, setCreando] = useState(false);
+
+  const guardar = (campo) => {
+    if (editando) {
+      setCampos(campos.map(c => c.id === editando.id ? { ...campo, id: editando.id } : c));
+    } else {
+      setCampos([...campos, { ...campo, id: 'campo_' + Date.now() }]);
+    }
+    setEditando(null); setCreando(false);
+  };
+
+  const eliminar = (id) => {
+    if (!confirm('¿Eliminar este campo? Los datos guardados se conservarán pero no se mostrarán.')) return;
+    setCampos(campos.filter(c => c.id !== id));
+  };
+
+  return (
+    <div>
+      <div style={styles.sectionHeader}>
+        <div>
+          <h2 style={styles.sectionTitle}>Campos personalizados</h2>
+          <p style={styles.sectionSub}>Agregá campos adicionales al formulario de registro.</p>
+        </div>
+        <button onClick={() => { setCreando(true); setEditando(null); }} style={styles.btnPrimary}>
+          <Icons.Plus size={16} /> Nuevo campo
+        </button>
+      </div>
+      {campos.length === 0 ? (
+        <div style={styles.empty}>
+          <div style={styles.emptyIcon}><Icons.Edit2 size={32} strokeWidth={1.5} /></div>
+          <h3 style={styles.emptyTitle}>Sin campos personalizados</h3>
+          <p style={styles.emptyText}>Creá campos como "Modelo de equipo", "Dirección", "N° de orden", etc.</p>
+        </div>
+      ) : (
+        <div style={styles.campoLista}>
+          {campos.map(c => (
+            <div key={c.id} style={styles.campoCard}>
+              <div style={{ flex: 1 }}>
+                <div style={styles.catLabel}>{c.label}</div>
+                <div style={styles.catUso}>Tipo: {c.tipo || 'text'}{c.placeholder ? ` · "${c.placeholder}"` : ''}</div>
+              </div>
+              <button onClick={() => { setEditando(c); setCreando(false); }} style={styles.deleteBtn}><Icons.Edit2 size={15} /></button>
+              <button onClick={() => eliminar(c.id)} style={styles.deleteBtn}><Icons.Trash2 size={15} /></button>
+            </div>
+          ))}
+        </div>
+      )}
+      {(editando || creando) && (
+        <CampoEditor campo={editando} onGuardar={guardar}
+          onCerrar={() => { setEditando(null); setCreando(false); }} />
+      )}
+    </div>
+  );
+}
+
+function CampoEditor({ campo, onGuardar, onCerrar }) {
+  const [form, setForm] = useState(campo || { label: '', tipo: 'text', placeholder: '' });
+
+  return (
+    <div style={styles.modalOverlay} onClick={onCerrar}>
+      <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <div style={styles.modalHeader}>
+          <h2 style={styles.modalTitle}>{campo ? 'Editar campo' : 'Nuevo campo'}</h2>
+          <button onClick={onCerrar} style={styles.iconBtn}><Icons.X size={18} /></button>
+        </div>
+        <div style={styles.modalBody}>
+          <div style={styles.field}>
+            <label style={styles.label}>Nombre del campo *</label>
+            <input type="text" value={form.label}
+              onChange={(e) => setForm({ ...form, label: e.target.value })}
+              style={styles.input} placeholder="Ej. Modelo de equipo" autoFocus />
+          </div>
+          <div style={styles.field}>
+            <label style={styles.label}>Tipo de dato</label>
+            <select value={form.tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value })} style={styles.input}>
+              <option value="text">Texto</option>
+              <option value="number">Número</option>
+              <option value="email">Email</option>
+              <option value="tel">Teléfono</option>
+              <option value="date">Fecha</option>
+            </select>
+          </div>
+          <div style={styles.field}>
+            <label style={styles.label}>Texto de ayuda (placeholder)</label>
+            <input type="text" value={form.placeholder}
+              onChange={(e) => setForm({ ...form, placeholder: e.target.value })}
+              style={styles.input} placeholder="Ej. Ingrese el modelo" />
+          </div>
+        </div>
+        <div style={styles.modalFooter}>
+          <button onClick={onCerrar} style={styles.btnSecondary}>Cancelar</button>
+          <button onClick={() => { if (!form.label.trim()) return alert('Ingresá un nombre'); onGuardar(form); }} style={styles.btnPrimary}>
+            <Icons.Save size={15} /> Guardar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function generarPDF(registros, fecha, categorias, camposExtra) {
+  if (!registros || registros.length === 0) { alert('No hay registros para imprimir.'); return; }
+
+  const fechaLegible = fecha ? new Date(fecha + 'T00:00:00').toLocaleDateString('es-PE', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  }) : 'Todas las fechas';
+  const fechaTitulo = fechaLegible.charAt(0).toUpperCase() + fechaLegible.slice(1);
+  const completados = registros.filter(r => r.completado).length;
+  const pendientes = registros.length - completados;
+
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+
+  const tarjetasHTML = registros.map((r, i) => {
+    const cat = categorias.find(c => c.id === r.tipo) || { label: 'Sin categoría', color: '#475569', bg: '#eef2f6', icon: 'help' };
+    const camposActivos = camposExtra.filter(c => r.extras?.[c.id]);
+    const iconoHTML = esEmoji(cat.icon)
+      ? `<span style="font-size: 18px;">${esc(cat.icon)}</span>`
+      : `<span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${cat.color};margin-right:4px;"></span>`;
+
+    return `
+      <article class="registro" style="border-left-color: ${cat.color};">
+        <div class="reg-header">
+          <div class="reg-num">${i + 1}.</div>
+          <div class="reg-title">
+            <div class="reg-cliente">${esc(r.nombre)}</div>
+            <div class="reg-cat" style="color: ${cat.color};">
+              ${iconoHTML} ${esc(cat.label).toUpperCase()}
+            </div>
+          </div>
+          <div class="reg-estado ${r.completado ? 'completado' : 'pendiente'}">
+            ${r.completado ? '✓ COMPLETADO' : '○ PENDIENTE'}
+          </div>
+        </div>
+        <div class="reg-datos">
+          <div><strong>DNI/RUC:</strong> ${esc(r.documento) || '—'}</div>
+          <div><strong>Teléfono:</strong> ${esc(r.telefono) || '—'}${r.telefono2 ? ' / ' + esc(r.telefono2) : ''}</div>
+          <div><strong>Atendido por:</strong> ${esc(r.creadoPor) || '—'}</div>
+          ${camposActivos.map(c => `<div><strong>${esc(c.label)}:</strong> ${esc(r.extras[c.id])}</div>`).join('')}
+        </div>
+        ${r.contexto ? `<div class="reg-contexto"><strong>Detalle:</strong> ${esc(r.contexto)}</div>` : ''}
+      </article>
+    `;
+  }).join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><title>Servicios - ${esc(fecha || 'todos')}</title>
+<style>
+  @page { size: A4; margin: 15mm; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji", sans-serif; color: #0f172a; margin: 0; padding: 20px; font-size: 11pt; line-height: 1.4; }
+  .doc-header { border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 16px; }
+  .doc-title { font-size: 18pt; font-weight: 700; margin: 0 0 4px; }
+  .doc-fecha { font-size: 10pt; color: #475569; text-transform: capitalize; }
+  .doc-stats { font-size: 9pt; color: #64748b; margin-bottom: 16px; }
+  .registro { border: 1px solid #e2e8f0; border-left: 4px solid; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; page-break-inside: avoid; break-inside: avoid; }
+  .reg-header { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+  .reg-num { font-weight: 700; font-size: 11pt; color: #475569; }
+  .reg-title { flex: 1; }
+  .reg-cliente { font-size: 12pt; font-weight: 600; margin-bottom: 2px; }
+  .reg-cat { font-size: 8.5pt; font-weight: 700; letter-spacing: 0.04em; }
+  .reg-estado { font-size: 8pt; font-weight: 700; letter-spacing: 0.05em; padding: 3px 8px; border-radius: 12px; white-space: nowrap; }
+  .reg-estado.completado { background: #e8f5ee; color: #0d7a3d; }
+  .reg-estado.pendiente { background: #fef3e8; color: #b54708; }
+  .reg-datos { font-size: 9.5pt; color: #334155; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; margin-bottom: 6px; }
+  .reg-datos strong { color: #64748b; font-weight: 500; }
+  .reg-contexto { font-size: 9.5pt; color: #334155; padding-top: 6px; border-top: 1px dashed #e2e8f0; margin-top: 4px; }
+  .reg-contexto strong { color: #64748b; }
+  .doc-footer { margin-top: 24px; padding-top: 10px; border-top: 1px solid #e2e8f0; font-size: 8pt; color: #94a3b8; text-align: center; }
+  .acciones { position: fixed; top: 16px; right: 16px; display: flex; gap: 8px; z-index: 1000; }
+  .acciones button { padding: 10px 18px; border-radius: 8px; border: 1px solid #e2e8f0; background: white; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .acciones .primary { background: #0f172a; color: white; border-color: #0f172a; }
+  @media print { .acciones { display: none; } body { padding: 0; } }
+</style></head>
+<body>
+  <div class="acciones">
+    <button onclick="window.close()">Cerrar</button>
+    <button class="primary" onclick="window.print()">Imprimir / Guardar PDF</button>
+  </div>
+  <div class="doc-header">
+    <h1 class="doc-title">Registro de Servicios Técnicos</h1>
+    <div class="doc-fecha">${esc(fechaTitulo)}</div>
+  </div>
+  <div class="doc-stats">
+    Total: <strong>${registros.length}</strong>  ·
+    Completados: <strong>${completados}</strong>  ·
+    Pendientes: <strong>${pendientes}</strong>
+  </div>
+  ${tarjetasHTML}
+  <div class="doc-footer">Generado el ${new Date().toLocaleString('es-PE')}</div>
+  <script>window.addEventListener('load', () => setTimeout(() => window.print(), 300));<\/script>
+</body></html>`;
+
+  const ventana = window.open('', '_blank', 'width=900,height=1000');
+  if (!ventana) { alert('Tu navegador bloqueó la ventana emergente. Habilitalas para este sitio.'); return; }
+  ventana.document.write(html);
+  ventana.document.close();
+}
+
+const styles = {
+  app: { minHeight: '100vh', backgroundColor: '#fafaf9', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', color: '#0f172a' },
+  header: { backgroundColor: 'white', borderBottom: '1px solid #e2e8f0', padding: '14px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 10 },
+  headerLeft: { display: 'flex', alignItems: 'center', gap: 16 },
+  headerRight: { display: 'flex', alignItems: 'center', gap: 16 },
+  logo: { display: 'flex', alignItems: 'center', gap: 12 },
+  logoMark: { width: 38, height: 38, borderRadius: 8, backgroundColor: '#0f172a', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 18, letterSpacing: '-0.02em' },
+  logoTitle: { fontWeight: 600, fontSize: 15, letterSpacing: '-0.01em' },
+  logoSubtitle: { fontSize: 12, color: '#64748b', marginTop: 1 },
+  userInfo: { display: 'flex', alignItems: 'center', gap: 10 },
+  userBadge: { fontSize: 10, fontWeight: 700, letterSpacing: '0.05em', padding: '3px 8px', borderRadius: 4, backgroundColor: '#f1f5f9', color: '#475569' },
+  userName: { fontSize: 14, color: '#334155', fontWeight: 500 },
+  iconBtn: { width: 36, height: 36, borderRadius: 8, border: '1px solid #e2e8f0', backgroundColor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569' },
+  tabs: { backgroundColor: 'white', borderBottom: '1px solid #e2e8f0', padding: '0 32px', display: 'flex', gap: 4, position: 'sticky', top: 67, zIndex: 9 },
+  tab: { padding: '12px 16px', backgroundColor: 'transparent', border: 'none', borderBottom: '2px solid transparent', fontSize: 13, fontWeight: 500, color: '#64748b', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: 6 },
+  tabActivo: { color: '#0f172a', borderBottomColor: '#0f172a', fontWeight: 600 },
+  main: { maxWidth: 1100, margin: '0 auto', padding: '32px' },
+  toolbar: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 16 },
+  toolbarLeft: { display: 'flex', gap: 10, flexWrap: 'wrap', flex: 1, minWidth: 280 },
+  dateSelector: { display: 'flex', alignItems: 'center', gap: 10, backgroundColor: 'white', border: '1px solid #e2e8f0', borderRadius: 10, padding: '10px 14px' },
+  dateInput: { border: 'none', background: 'transparent', fontSize: 14, fontFamily: 'inherit', color: '#0f172a', fontWeight: 500 },
+  searchBox: { display: 'flex', alignItems: 'center', gap: 8, backgroundColor: 'white', border: '1px solid #e2e8f0', borderRadius: 10, padding: '10px 14px', flex: 1, minWidth: 220 },
+  searchInput: { border: 'none', background: 'transparent', fontSize: 14, fontFamily: 'inherit', color: '#0f172a', flex: 1, outline: 'none' },
+  clearBtn: { width: 20, height: 20, borderRadius: 4, border: 'none', backgroundColor: '#f1f5f9', color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  toolbarActions: { display: 'flex', gap: 10 },
+  btnPrimary: { display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 18px', borderRadius: 10, backgroundColor: '#0f172a', color: 'white', border: 'none', fontSize: 14, fontWeight: 600, fontFamily: 'inherit' },
+  btnSecondary: { display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 18px', borderRadius: 10, backgroundColor: 'white', color: '#0f172a', border: '1px solid #e2e8f0', fontSize: 14, fontWeight: 500, fontFamily: 'inherit' },
+  busquedaGlobal: { display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', marginBottom: 16, backgroundColor: '#fef9c3', border: '1px solid #fde68a', borderRadius: 8, fontSize: 13, color: '#713f12' },
+  linkBtn2: { border: 'none', background: 'transparent', color: '#1d4ed8', fontSize: 13, fontWeight: 600, marginLeft: 'auto', fontFamily: 'inherit' },
+  listaHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, paddingBottom: 12, borderBottom: '1px solid #e2e8f0' },
+  listaCount: { fontSize: 13, color: '#64748b', fontWeight: 500 },
+  listaStats: { display: 'flex', gap: 16, fontSize: 13 },
+  statCompletado: { color: '#0d7a3d', fontWeight: 500 },
+  statPendiente: { color: '#b54708', fontWeight: 500 },
+  tarjetas: { display: 'flex', flexDirection: 'column', gap: 12 },
+  tarjeta: { backgroundColor: 'white', border: '1px solid #e2e8f0', borderLeft: '4px solid', borderRadius: 12, padding: '20px 24px', boxShadow: '0 1px 2px rgba(0,0,0,0.04)' },
+  tarjetaHeader: { display: 'flex', alignItems: 'flex-start', gap: 16 },
+  iconoTipo: { width: 44, height: 44, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  tarjetaTitleArea: { flex: 1, minWidth: 0 },
+  tarjetaCliente: { fontSize: 17, fontWeight: 600, color: '#0f172a', letterSpacing: '-0.01em', marginBottom: 2 },
+  tarjetaTipo: { fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' },
+  fechaInline: { textTransform: 'none', color: '#94a3b8', fontWeight: 400 },
+  tarjetaActions: { display: 'flex', alignItems: 'center', gap: 8 },
+  checkBtn: { border: 'none', background: 'transparent', padding: 4, borderRadius: 6, display: 'flex' },
+  estadoBadge: { fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 20, textTransform: 'uppercase', letterSpacing: '0.04em' },
+  deleteBtn: { width: 28, height: 28, borderRadius: 6, border: 'none', backgroundColor: 'transparent', color: '#94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  tarjetaBody: { marginTop: 16, marginLeft: 60 },
+  datosGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 12 },
+  dato: { display: 'flex', alignItems: 'flex-start', gap: 8 },
+  datoLabel: { fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 },
+  datoValor: { fontSize: 14, color: '#0f172a', fontWeight: 500, marginTop: 2 },
+  contexto: { marginTop: 12, paddingTop: 12, borderTop: '1px dashed #e2e8f0' },
+  contextoLabel: { fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600, marginBottom: 4 },
+  contextoTexto: { fontSize: 14, color: '#334155', lineHeight: 1.5 },
+  empty: { textAlign: 'center', padding: '80px 20px', backgroundColor: 'white', borderRadius: 12, border: '1px dashed #cbd5e1' },
+  emptyIcon: { width: 64, height: 64, borderRadius: 16, backgroundColor: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: '#94a3b8' },
+  emptyTitle: { fontSize: 18, fontWeight: 600, margin: '0 0 6px', color: '#334155' },
+  emptyText: { fontSize: 14, color: '#64748b', margin: 0 },
+  modalOverlay: { position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, zIndex: 100 },
+  modal: { backgroundColor: 'white', borderRadius: 16, width: '100%', maxWidth: 580, maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' },
+  modalHeader: { padding: '20px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+  modalTitle: { fontSize: 18, fontWeight: 600, margin: 0, letterSpacing: '-0.01em' },
+  modalBody: { padding: 24, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16 },
+  modalFooter: { padding: '16px 24px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', gap: 10 },
+  field: { display: 'flex', flexDirection: 'column', gap: 6 },
+  row: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 },
+  label: { fontSize: 13, fontWeight: 500, color: '#334155' },
+  input: { padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, fontFamily: 'inherit', color: '#0f172a', backgroundColor: 'white' },
+  linkBtn: { border: 'none', background: 'transparent', color: '#1d4ed8', fontSize: 13, fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 0', alignSelf: 'flex-start', fontFamily: 'inherit' },
+  tipoGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 8 },
+  tipoOpcion: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '12px 8px', borderRadius: 10, border: '2px solid', backgroundColor: 'white', fontSize: 12, fontWeight: 500, fontFamily: 'inherit', textAlign: 'center' },
+  tipoOpcionLabel: { fontSize: 11, lineHeight: 1.2 },
+  extrasBox: { backgroundColor: '#f8fafc', borderRadius: 10, padding: 16, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 12 },
+  extrasTitle: { fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' },
+  loginWrapper: { minHeight: '100vh', backgroundColor: '#fafaf9', backgroundImage: 'radial-gradient(circle at 20% 20%, rgba(15,23,42,0.04) 0%, transparent 40%), radial-gradient(circle at 80% 80%, rgba(13,122,61,0.04) 0%, transparent 40%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 },
+  loginCard: { backgroundColor: 'white', borderRadius: 16, padding: 40, width: '100%', maxWidth: 400, boxShadow: '0 4px 24px rgba(15,23,42,0.06)', border: '1px solid #e2e8f0' },
+  loginLogo: { display: 'flex', justifyContent: 'center', marginBottom: 20 },
+  loginTitle: { fontSize: 22, fontWeight: 700, margin: '0 0 6px', textAlign: 'center', letterSpacing: '-0.02em' },
+  loginSubtitle: { fontSize: 14, color: '#64748b', margin: '0 0 28px', textAlign: 'center' },
+  loginForm: { display: 'flex', flexDirection: 'column', gap: 14 },
+  errorBox: { padding: '10px 12px', backgroundColor: '#fef2f2', color: '#991b1b', borderRadius: 8, fontSize: 13, border: '1px solid #fecaca' },
+  btnLogin: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px', borderRadius: 10, backgroundColor: '#0f172a', color: 'white', border: 'none', fontSize: 14, fontWeight: 600, fontFamily: 'inherit', marginTop: 4 },
+  loginHint: { marginTop: 24, padding: 12, backgroundColor: '#f8fafc', borderRadius: 8, fontSize: 12, color: '#64748b', textAlign: 'center' },
+  sectionHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24, gap: 16, flexWrap: 'wrap' },
+  sectionTitle: { fontSize: 22, fontWeight: 700, margin: 0, letterSpacing: '-0.02em' },
+  sectionSub: { fontSize: 14, color: '#64748b', margin: '4px 0 0' },
+  catGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 },
+  catCard: { display: 'flex', alignItems: 'center', gap: 14, backgroundColor: 'white', borderRadius: 12, border: '1px solid #e2e8f0', borderLeft: '4px solid', padding: '14px 16px' },
+  catLabel: { fontSize: 14, fontWeight: 600, color: '#0f172a' },
+  catUso: { fontSize: 12, color: '#94a3b8', marginTop: 2 },
+  campoLista: { display: 'flex', flexDirection: 'column', gap: 8 },
+  campoCard: { display: 'flex', alignItems: 'center', gap: 12, backgroundColor: 'white', borderRadius: 10, border: '1px solid #e2e8f0', padding: '14px 16px' },
+  colorRow: { display: 'flex', gap: 8, flexWrap: 'wrap' },
+  colorBtn: { width: 32, height: 32, borderRadius: 8, border: 'none', cursor: 'pointer', transition: 'all 0.15s ease' },
+  iconGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(44px, 1fr))', gap: 6, maxHeight: 200, overflowY: 'auto', padding: 8, backgroundColor: '#f8fafc', borderRadius: 8 },
+  iconBtn2: { width: '100%', aspectRatio: '1', borderRadius: 6, border: '2px solid', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  iconHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
+  toggle: { display: 'inline-flex', backgroundColor: '#f1f5f9', borderRadius: 8, padding: 3, gap: 2 },
+  toggleBtn: { border: 'none', padding: '6px 14px', borderRadius: 6, fontSize: 12, fontWeight: 600, fontFamily: 'inherit', transition: 'all 0.15s ease' },
+};
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+
+</script>
+</body>
+</html>

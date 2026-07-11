@@ -19,8 +19,7 @@ Una aplicación web desarrollada en **React** para gestionar registros de client
 
 ## 🛠 Tecnologías utilizadas
 
-- React
-- JavaScript (ES6+)
+- JavaScript
 - HTML5
 - CSS3
 - JSX

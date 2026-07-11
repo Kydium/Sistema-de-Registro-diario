@@ -1,6 +1,7 @@
 # 📋 Sistema de Gestión de Registros
 
 Sistema web diseñado para administrar registros de clientes, organizar información mediante categorías y generar reportes en formato PDF. La aplicación permite personalizar los datos almacenados, facilitando su adaptación a diferentes procesos administrativos o de atención al cliente.
+
 <img width="1819" height="974" alt="imagen" src="https://github.com/user-attachments/assets/33547e58-f524-4b65-965f-1b4d99033704" />
 
 ---
@@ -17,6 +18,9 @@ Sistema web diseñado para administrar registros de clientes, organizar informac
 
 ---
 
+<img width="1884" height="996" alt="imagen" src="https://github.com/user-attachments/assets/3862a549-57e2-4e0a-933c-a28afe56ddba" />
+
+
 # Funcionamiento
 
 El sistema almacena la información de cada cliente junto con su categoría y los campos adicionales definidos por el usuario.
@@ -31,6 +35,9 @@ Cada registro contiene información básica como:
 - Estado del registro
 - Observaciones
 - Campos personalizados
+
+<img width="647" height="835" alt="imagen" src="https://github.com/user-attachments/assets/0053b1dd-5097-4629-aa24-4493f9f04b3e" />
+
 
 Las categorías permiten organizar los registros y pueden configurarse con un nombre, color e icono para facilitar su identificación.
 

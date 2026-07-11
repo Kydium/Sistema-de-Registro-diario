@@ -56,6 +56,9 @@ El sistema permite exportar todos los registros a un documento PDF que incluye:
 - Categoría asignada.
 - Campos personalizados registrados.
 
+<img width="933" height="412" alt="imagen" src="https://github.com/user-attachments/assets/d89e1763-7143-4c51-b91f-99309261a32a" />
+
+
 Esto facilita la impresión o el almacenamiento de la información para fines administrativos.
 
 ---
@@ -71,11 +74,14 @@ El proyecto está compuesto por los siguientes módulos:
 - Sistema de búsqueda y filtrado.
 - Gestión de estados de los registros.
 
+<img width="908" height="74" alt="imagen" src="https://github.com/user-attachments/assets/4636cc7f-bbde-4f9d-9e98-7d043704fd50" />
+
+
 ---
 
 # Almacenamiento
 
-La información se almacena localmente en el navegador, permitiendo conservar los registros entre sesiones sin necesidad de una base de datos o un servidor externo.
+Esta prueba de GitHub esta de manera local, quiere decir que todo creado aqui se almacenara de en este navegador no en la nube, pero tambien coloque la version de web que se usaba para cargarlo en la nube de **Hostinger** de tal modo de que todos los usuario puedan ver los registros
 
 ---
 

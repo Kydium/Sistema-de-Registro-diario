@@ -1,8 +1,4 @@
 <?php
-// ============================================================
-// CONFIGURACIÓN DE BASE DE DATOS
-// Edita estos valores con los datos de tu Hostinger
-// ============================================================
 
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'servicios_db');   // nombre de tu base de datos en Hostinger

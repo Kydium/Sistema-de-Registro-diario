@@ -98,15 +98,4 @@ Este sistema puede utilizarse para:
 
 ---
 
-# Funcionalidades futuras
-
-- Exportación a Excel.
-- Integración con base de datos.
-- Autenticación de usuarios.
-- Historial de cambios.
-- Dashboard con estadísticas.
-- Copias de seguridad automáticas.
-
----
-
 Proyecto desarrollado como una solución para la gestión organizada de registros y generación automática de reportes.

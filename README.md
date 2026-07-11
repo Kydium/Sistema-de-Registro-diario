@@ -96,8 +96,4 @@ Este sistema puede utilizarse para:
 
 ---
 
-# Autor
-
-**Michael Téllez Oviedo**
-
 Proyecto desarrollado como una solución para la gestión organizada de registros y generación automática de reportes.

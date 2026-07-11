@@ -16,10 +16,9 @@ Sistema web diseñado para administrar registros de clientes, organizar informac
 - Generación de reportes en PDF.
 - Interfaz intuitiva para la administración de datos.
 
----
-
 <img width="1884" height="996" alt="imagen" src="https://github.com/user-attachments/assets/3862a549-57e2-4e0a-933c-a28afe56ddba" />
 
+---
 
 # Funcionamiento
 
